@@ -49,12 +49,9 @@ File structure (suggested)
 /
 ├─ app.py
 ├─ requirements.txt
-├─ train_model.py
-├─ models/
-│  └─ model.pkl
-├─ static/
-├─ templates/
-├─ data/
+
+├─ templates/index.html
+├─ data/realistic_crop_iriigation_dataset.csv
 ├─ README.md
 └─ .gitignore
 
