@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify
 import serial
 import time
 import pandas as pd
+# Import modules for ML model and evaluation
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split 
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, roc_curve, auc
@@ -9,10 +10,12 @@ from sklearn.preprocessing import label_binarize # For multi-class ROC
 import numpy as np
 import matplotlib.pyplot as plt # For generating the curve image
 import threading
+import matplotlib
+matplotlib.use('Agg')
 
 app = Flask(__name__)
 
-# SERIAL COMMUNICATION 
+#SERIAL COMMUNICATION
 # Adjust COM port for your system (Windows: COM3, Linux/Mac: /dev/ttyUSB0)
 try:
     # Attempt connection (will proceed even if it fails, as shown in your logs)
@@ -49,14 +52,14 @@ try:
         X, y_irrigation, test_size=0.2, random_state=42
     )
 
-    # Train Models on Training Data 
+    # --- 2. Train Models on Training Data ---
     crop_model = RandomForestClassifier(random_state=42)
     crop_model.fit(X_train, y_crop_train)
 
     irrigation_model = RandomForestClassifier(random_state=42)
     irrigation_model.fit(X_train, y_irrigation_train)
 
-    #  Evaluate Models and Print Results
+    # --- 3. Evaluate Models and Print Results ---
     
     print("\n" + "="*50)
     print("--- 🌾 Crop Prediction Model Evaluation ---")
@@ -153,13 +156,13 @@ except FileNotFoundError:
 except KeyError as e:
     print(f"KeyError: {e}. Column name mismatch in CSV. Check column names.")
     exit()
+#END MODIFIED SECTION 
 
 
-
-# SENSOR DATA STORAGE 
+#SENSOR DATA STORAGE 
 sensor_data = {'temp': 0, 'hum': 0, 'soil': 0, 'crop': 'N/A', 'advice': 'N/A'}
 
-# READ ARDUINO DATA IN BACKGROUND 
+#  READ ARDUINO DATA IN BACKGROUND 
 def read_arduino():
     if arduino is None:
         print("Arduino connection failed, background thread not running.")
@@ -178,7 +181,7 @@ def read_arduino():
                     sensor_data['hum'] = hum
                     sensor_data['soil'] = soil
 
-                    # --- IMPROVED PREDICTION LOGIC: Using a DataFrame for robustness ---
+                    # IMPROVED PREDICTION LOGIC: Using a DataFrame for robustness 
                     if crop_model and irrigation_model:
                         input_data_df = pd.DataFrame([[temp, hum, soil]], 
                                                      columns=['Temperature', 'Humidity', 'SoilMoisture'])
@@ -186,7 +189,7 @@ def read_arduino():
                         # Predict the crop and irrigation advice using the trained models
                         sensor_data['crop'] = crop_model.predict(input_data_df)[0]
                         sensor_data['advice'] = irrigation_model.predict(input_data_df)[0]
-                    # --- END IMPROVEMENT ---
+                    # -END IMPROVEMENT 
                 
         except ValueError:
             print(f"Non-numeric data received: {line}")
@@ -202,7 +205,7 @@ if arduino:
     thread.daemon = True
     thread.start()
 
-#  FLASK ROUTES 
+#FLASK ROUTES 
 @app.route('/')
 def index():
     return render_template('index.html')
